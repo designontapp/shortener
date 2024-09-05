@@ -1,0 +1,35 @@
+name: Delete Non-Owner Issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  check-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check issue author
+        id: issue_author
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.payload.repository.owner.login;
+            const issueAuthor = context.payload.issue.user.login;
+            
+            if (issueAuthor !== owner) {
+              // Add a comment explaining why the issue is being deleted (optional)
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: "This issue was automatically closed because only the repository owner can create issues."
+              });
+
+              // Close the issue
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: 'closed'
+              });
+            }
